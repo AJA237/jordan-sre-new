@@ -1,30 +1,22 @@
 # cloudbuild.yaml
-# This pipeline builds a Docker image, pushes it to Artifact Registry,
-# and then deploys it to a GKE cluster using kubectl.
-
 steps:
 # Step 1: Build the Docker image
-# Uses the 'docker' builder to build the image from the Dockerfile in the current directory.
-# The image is tagged with the Artifact Registry URL, project ID, repo ID, app name, and a dynamic tag
-# based on the short Git commit SHA.
 - name: 'gcr.io/cloud-builders/docker'
   id: Build
   args:
     - 'build'
     - '-t'
-    - 'us-central1-docker.pkg.dev/${PROJECT_ID}/sre-training-repo/vm-instance:${_GIT_TAG}'
+    - 'us-central1-docker.pkg.dev/${PROJECT_ID}/sre-training-repo/my-flask-app:${_GIT_TAG}'
     - '.'
 
 # Step 2: Push the Docker image to Google Artifact Registry
-# Uses the 'docker' builder to push the newly built image to the specified Artifact Registry.
 - name: 'gcr.io/cloud-builders/docker'
   id: Push
   args:
     - 'push'
-    - 'us-central1-docker.pkg.dev/${PROJECT_ID}/sre-training-repo/vm-instance:${_GIT_TAG}'
+    - 'us-central1-docker.pkg.dev/${PROJECT_ID}/sre-training-repo/my-flask-app:${_GIT_TAG}'
 
-# Step 3: Get GKE credentials for kubectl
-# This step is MODIFIED to save the config to the shared /workspace
+# Step 3: Get GKE credentials and save them to the shared workspace
 - name: 'gcr.io/cloud-builders/gcloud'
   id: Get GKE Credentials
   args:
@@ -37,29 +29,21 @@ steps:
   env:
     - 'KUBECONFIG=/workspace/kubeconfig'
 
-# Step 4: Deploy the application to GKE
-# This step is MODIFIED to use the shared config from /workspace
+# Step 4: Deploy to GKE using the credentials from the shared workspace
 - name: 'gcr.io/cloud-builders/kubectl'
   id: Deploy to GKE
   args:
     - 'set'
     - 'image'
-    - 'deployment/my-flask-app-deployment'
+    - 'deployment/my-flask-app-deployment' # Your Kubernetes Deployment name
     - 'my-flask-app-container=us-central1-docker.pkg.dev/${PROJECT_ID}/sre-training-repo/my-flask-app:${_GIT_TAG}'
   env:
     - 'KUBECONFIG=/workspace/kubeconfig'
 
-# Substitutions allow dynamic values. _GIT_TAG will be replaced by the short SHA of the commit.
+# Substitutions allow dynamic values.
 substitutions:
-  _GIT_TAG: 'latest' # Default tag, will be overridden by Cloud Build's built-in substitutions
+  _GIT_TAG: 'latest'
 
-# Permissions for the Cloud Build service account:
-# The Cloud Build service account (PROJECT_NUMBER@cloudbuild.gserviceaccount.com)
-# needs the following IAM roles:
-# - Cloud Build Editor (for running builds)
-# - Artifact Registry Writer (for pushing images)
-# - Kubernetes Engine Developer (for deploying to GKE)
-# - Service Account User (to act as the GKE node service account for deploying)
-# You might need to grant these manually if the default permissions are insufficient.
+# Logging option to fix service account permission errors
 options:
   logging: CLOUD_LOGGING_ONLY
