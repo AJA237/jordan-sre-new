@@ -35,7 +35,7 @@ steps:
   args:
     - 'set'
     - 'image'
-    - 'deployment/my-flask-app-deployment' # Your Kubernetes Deployment name
+    - 'deployment/my-flask-app-deployment'
     - 'my-flask-app-container=us-central1-docker.pkg.dev/${PROJECT_ID}/sre-training-repo/my-flask-app:${_GIT_TAG}'
   env:
     - 'KUBECONFIG=/workspace/kubeconfig'
