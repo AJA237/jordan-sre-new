@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-collector-conf
+data:
+  otel-collector-config.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+    exporters:
+      googlecloud:
+        project: "jordan-sre-new"
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          exporters: [googlecloud]
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vm-instance-deployment
+  labels:
+    app: vm-instance
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: vm-instance
+  template:
+    metadata:
+      labels:
+        app: vm-instance
+    spec:
+      volumes:
+      - name: otel-collector-config-vol
+        configMap:
+          name: otel-collector-conf
+      containers:
+      - name: vm-instance-container
+        image: us-central1-docker.pkg.dev/jordan-sre-new/sre-training-repo/vm-instance:v1.14
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "250m"
+            memory: "256M"
+      - name: otel-collector
+        image: otel/opentelemetry-collector-contrib:0.95.0
+        args:
+          - "--config=/conf/otel-collector-config.yaml"
+        ports:
+          - name: otlp-grpc
+            containerPort: 4317
+            protocol: TCP
+        volumeMounts:
+        - name: otel-collector-config-vol
+          mountPath: /conf
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "250m"
+            memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vm-instance-service
+spec:
+  selector:
+    app: vm-instance
+  type: LoadBalancer
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
