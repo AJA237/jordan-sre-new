@@ -24,30 +24,30 @@ steps:
     - 'us-central1-docker.pkg.dev/${PROJECT_ID}/sre-training-repo/vm-instance:${_GIT_TAG}'
 
 # Step 3: Get GKE credentials for kubectl
-# Uses the 'gcloud' builder to configure kubectl to interact with the GKE cluster.
-# The cluster name and region are passed as arguments.
+# This step is MODIFIED to save the config to the shared /workspace
 - name: 'gcr.io/cloud-builders/gcloud'
   id: Get GKE Credentials
   args:
     - 'container'
     - 'clusters'
     - 'get-credentials'
-    - 'sre-training-cluster' # Name of your GKE cluster from Terraform
-    - '--region=us-central1' # Region of your GKE cluster from Terraform
+    - 'sre-training-cluster'
+    - '--region=us-central1'
     - '--project=${PROJECT_ID}'
+  env:
+    - 'KUBECONFIG=/workspace/kubeconfig'
 
 # Step 4: Deploy the application to GKE
-# Uses the 'kubectl' builder to update the 'my-flask-app-deployment'
-# to use the new Docker image tag. This assumes the deployment already exists.
+# This step is MODIFIED to use the shared config from /workspace
 - name: 'gcr.io/cloud-builders/kubectl'
   id: Deploy to GKE
   args:
     - 'set'
     - 'image'
-    - 'deployment/my-flask-app-deployment' # Your Kubernetes Deployment name
-    - 'my-flask-app-container=us-central1-docker.pkg.dev/${PROJECT_ID}/sre-training-repo/vm-instance:${_GIT_TAG}'
+    - 'deployment/my-flask-app-deployment'
+    - 'my-flask-app-container=us-central1-docker.pkg.dev/${PROJECT_ID}/sre-training-repo/my-flask-app:${_GIT_TAG}'
   env:
-    - 'CLOUDSDK_COMPUTE_ZONE=us-central1' # Set the zone for kubectl if needed
+    - 'KUBECONFIG=/workspace/kubeconfig'
 
 # Substitutions allow dynamic values. _GIT_TAG will be replaced by the short SHA of the commit.
 substitutions:
