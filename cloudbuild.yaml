@@ -40,7 +40,7 @@ steps:
   env:
     - 'KUBECONFIG=/workspace/kubeconfig'
 
-# Substitutions allow dynamic values.
+# Substitutions allow dynamic values
 substitutions:
   _GIT_TAG: 'latest'
 
