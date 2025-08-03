@@ -61,3 +61,5 @@ substitutions:
 # - Kubernetes Engine Developer (for deploying to GKE)
 # - Service Account User (to act as the GKE node service account for deploying)
 # You might need to grant these manually if the default permissions are insufficient.
+options:
+  logging: CLOUD_LOGGING_ONLY
