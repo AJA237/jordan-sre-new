@@ -67,7 +67,7 @@ def hello():
         with tracer.start_as_current_span("hello-endpoint-processing") as span:
            span.set_attribute("http.method", method)
            span.set_attribute("http.path", endpoint)
-           message = "Hello from Flask on GKE! (Version 1.0)"
+           message = "Hello World from Flask on GKE! (Version 1.0)"
            log_entry = {
                "severity": "INFO",
                "message": message,
