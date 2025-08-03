@@ -36,7 +36,7 @@ steps:
     - 'set'
     - 'image'
     - 'deployment/vm-instance-deployment'
-    - 'my-flask-app-container=us-central1-docker.pkg.dev/${PROJECT_ID}/sre-training-repo/my-flask-app:${_GIT_TAG}'
+    - 'vm-instance-container=us-central1-docker.pkg.dev/${PROJECT_ID}/sre-training-repo/my-flask-app:${_GIT_TAG}'
   env:
     - 'KUBECTL_VERSION=1.29'
     - 'KUBECONFIG=/workspace/kubeconfig'
